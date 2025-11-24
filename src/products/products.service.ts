@@ -1,45 +1,87 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ProductsModel } from './products.model';
+import { Product } from './products.model';
+
 @Injectable()
 export class ProductsService {
-    private products: ProductsModel[] = [];
+  private product: Product[] = [];
 
-    insertProduct(title: string, price: number, description: string): string {
-        const id = new Date().toString();
-        const newProduct = new ProductsModel(
-            id, // Generate a random ID for simplicity
-            title,
-            price,
-            description
-        );
-        this.products.push(newProduct);
-        return newProduct.id;
-    }
+  insertProduct(title: string, desc: string, price: number) {
+    const id = Math.floor(Math.random() * Date.now()).toString(16);
+    const newProduct = new Product(id, title, desc, price);
+    this.product.push(newProduct);
+    return id;
+  }
 
-    getAllProducts(): ProductsModel[] {
-        return [...this.products];
-    }
+  getProducts() {
+    return [...this.product];
+  }
 
-    getProductById(id: string): ProductsModel {
-        const [product] = [...this.findProduct(id)];
-        if (!product) {
-            throw new NotFoundException(`Product with id ${id} not found.`);
-        }
-        return {...product};
+  getProduct(prodId: string) {
+    const [product] = this.findProduct(prodId);
+    if (!product) {
+      throw new NotFoundException('Product not found');
     }
-     
-    updateProduct(id: string, productData:{
-        title?: string;
-        description?: string;
-        price?: number; 
-    }): void { }
-    
-    private findProduct(id: string): [ product: ProductsModel, index: number ] {
-        const index = this.products.findIndex(prod => prod.id === id);
-        if (index === -1) {
-            throw new NotFoundException(`Product with id ${id} not found.`);
-        }   
-        const product = this.products[index];
-        return [ product, index ];
+    return { ...product };
+  }
+
+  updateProduct(
+    id: string,
+    productData: {
+      title?: string | null;
+      description?: string | null;
+      price?: number | null;
+    },
+  ) {
+    const [product, index] = this.findProduct(id);
+    const updatedProduct = {
+      title:
+        productData.title !== undefined && productData.title !== null
+          ? productData.title
+          : product.title,
+      discription:
+        productData.description !== undefined && productData.description !== null
+          ? productData.description
+          : product.discription,
+      price:
+        productData.price !== undefined && productData.price !== null
+          ? productData.price
+          : product.price,
+    };
+    this.product[index] = { ...product, ...updatedProduct };
+
+    return { ...product, ...updatedProduct };
+  }
+
+  partialUpdate(
+    id: string,
+    productData: {
+      title?: string;
+      description?: string;
+      price?: number;
+    },
+  ) {
+    const [product, index] = this.findProduct(id);
+    const updatedProduct = {
+      ...product,
+      ...productData,
+    };
+    this.product[index] = updatedProduct;
+    return updatedProduct;
+  }
+
+  private findProduct(id: string): [Product, number] {
+    const productIndex = this.product.findIndex((prod) => prod.id === id);
+    if (productIndex === -1) {
+      throw new NotFoundException('Product not found');
     }
+    return [this.product[productIndex], productIndex];
+  }
+
+  deleteProduct(prodId: string) {
+    const [product, index] = this.findProduct(prodId);
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+    this.product.splice(index, 1);
+  }
 }

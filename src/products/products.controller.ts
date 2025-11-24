@@ -1,26 +1,50 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put } from '@nestjs/common';
 import { ProductsService } from './products.service';
+import { Product } from './products.model';
 
-@Controller('products')
+@Controller({
+  path: 'products',
+  version: '1',
+})
 export class ProductsController {
-    
-    constructor (private productsService: ProductsService){ }
+     constructor(private productService: ProductsService) {}
 
-    @Get()
-    getAllProducts(): any {
-        return this.productsService.getAllProducts();
-    }
+  @Get()
+  getProducts() {
+    return this.productService.getProducts();
+  }
 
-    @Get(':id')
-    getProductById(@Param('id') prodId: string) {
-        return this.productsService.getProductById(prodId);
-    }
+  @Get(':id')
+  getProduct(@Param('id') id: string) {
+    return this.productService.getProduct(id);
+  }
 
-    @Post()
-    createProduct(@Body('title') pTitle:string,
-     @Body('description') pdesc:string, 
-     @Body('price') pPrice:number): any {
-        const generatedId = this.productsService.insertProduct(pTitle, pPrice, pdesc,);
-        return  {id: generatedId};
-    }
+  @Post()
+  addProducts(
+    @Body('title') pTitle: string,
+    @Body('description') pDesc: string,
+    @Body('price') pPrice: number,
+  ) {
+    const returnedId = this.productService.insertProduct(pTitle, pDesc, pPrice);
+
+    return { id: returnedId };
+  }
+
+  @Put(':id')
+  updateProduct(@Param('id') id: string, @Body() productData: Product) {
+    const updatedProduct = this.productService.updateProduct(id, productData);
+    return updatedProduct;
+  }
+
+  @Patch(':id')
+  partialUpdate(@Param('id') id: string, @Body() productData: Product) {
+    const updatedProduct = this.productService.partialUpdate(id, productData);
+    return updatedProduct;
+  }
+
+  @Delete(':id')
+  deleteProduct(@Param('id') id: string) {
+    this.productService.deleteProduct(id);
+    return { message: 'Product deleted successfully' };
+  }
 }
